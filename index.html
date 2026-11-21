@@ -36,6 +36,9 @@ h2{font-size:19px}
 <div class="price"><span>АИ-98</span><strong id="price98">Загрузка…</strong></div>
 <div class="price"><span>ДТ Евро</span><strong id="priceDieselEuro">Загрузка…</strong></div>
 <div class="price"><span>Газ</span><strong id="priceGas">Загрузка…</strong></div>
+<div class="price"><span>АИ-100</span><strong id="price100">Загрузка…</strong></div>
+<div class="price"><span>АИ-80</span><strong id="price80">Загрузка…</strong></div>
+<div class="price"><span>Метан</span><strong id="priceMethane">Загрузка…</strong></div>
 <p class="small" id="priceUpdated">Актуальные цены</p>
 </div>
 <div class="card">
@@ -75,7 +78,7 @@ h2{font-size:19px}
 <script>
 const priceClient=window.supabase.createClient('https://uaywtxvqzfqozwrzutaz.supabase.co','sb_publishable_k76gkPShf1-Gb0l77qJsfA_D2TcuLcV');
 (async function loadFuelPrices(){
- const {data,error}=await priceClient.from('fuel_prices').select('ai92,ai95,diesel,ai98,diesel_euro,gas,updated_at').order('id',{ascending:true}).limit(1).maybeSingle();
+ const {data,error}=await priceClient.from('fuel_prices').select('ai92,ai95,diesel,ai98,diesel_euro,gas,ai100,ai80,methane,updated_at').order('id',{ascending:true}).limit(1).maybeSingle();
  if(error||!data){document.getElementById('priceUpdated').textContent='Не удалось загрузить цены';return;}
  const format=value=>Number(value).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';
  document.getElementById('price92').textContent=format(data.ai92);
@@ -84,6 +87,9 @@ const priceClient=window.supabase.createClient('https://uaywtxvqzfqozwrzutaz.sup
  document.getElementById('price98').textContent=format(data.ai98);
  document.getElementById('priceDieselEuro').textContent=format(data.diesel_euro);
  document.getElementById('priceGas').textContent=format(data.gas);
+ document.getElementById('price100').textContent=format(data.ai100);
+ document.getElementById('price80').textContent=format(data.ai80);
+ document.getElementById('priceMethane').textContent=format(data.methane)+' /м³';
  document.getElementById('priceUpdated').textContent=data.updated_at?'Обновлено: '+new Date(data.updated_at).toLocaleString('ru-RU'):'Актуальные цены';
 })();
 </script>
