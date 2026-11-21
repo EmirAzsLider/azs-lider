@@ -12,11 +12,16 @@ header{display:flex;justify-content:space-between;align-items:center}
 .small{color:#a8b5c9;font-size:13px}
 h1{font-size:28px;margin-top:35px}
 .card{background:#14243b;border-radius:18px;padding:20px;margin-top:18px}
-.price{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #30415a}
-.price:last-child{border:0}
+.price,.station{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #30415a}
+.price:last-child,.station:last-child{border:0}
 strong{color:#ffc928;font-size:19px}
-button{width:100%;padding:16px;border:0;border-radius:13px;background:#ffc928;color:#101b2c;font-weight:bold;font-size:16px;margin-top:15px}
+button,.route{display:inline-block;padding:11px 14px;border:0;border-radius:10px;background:#ffc928;color:#101b2c;font-weight:bold;font-size:14px;text-decoration:none;white-space:nowrap}
 h2{font-size:19px}
+.station-info{min-width:0}
+.station-name{font-weight:bold;font-size:15px}
+.station-address{color:#a8b5c9;font-size:13px;line-height:1.4;margin-top:5px}
+.station .route{flex-shrink:0}
+@media(max-width:420px){body{padding:15px}.station{align-items:flex-start;flex-direction:column}.station .route{width:100%;text-align:center}}
 </style>
 </head>
 <body>
@@ -33,8 +38,37 @@ h2{font-size:19px}
 <div class="price"><span>Газ</span><strong id="priceGas">Загрузка…</strong></div>
 <p class="small" id="priceUpdated">Актуальные цены</p>
 </div>
-<div class="card"><h2>🎁 Бонусная программа</h2><p class="small">Следи за бонусами и получай выгодные предложения</p><button onclick="alert('Скоро здесь появится бонусная карта!')">Моя бонусная карта</button></div>
-<div class="card"><h2>📍 Наши заправки</h2><p class="small">Найди ближайшую АЗС Лидер</p><button onclick="alert('Адреса заправок скоро появятся!')">Выбрать АЗС</button></div>
+<div class="card">
+<h2>📍 Наши АЗС и объекты</h2>
+<p class="small">Выбери объект и построй маршрут до него</p>
+<div id="stations">
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Трампарк 2»</div><div class="station-address">Грозный, ул. Краснофлотская, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Краснофлотская">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Ойсхара»</div><div class="station-address">п. Ойсхара, ул. Маршала Жукова, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Ойсхара%2C%20ул.%20Маршала%20Жукова">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГНКС «Метан»</div><div class="station-address">Грозный, ул. Кирова, 10</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Кирова%2C%2010">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Лидер-Курчалой»</div><div class="station-address">Чеченская Республика, Курчалой, ул. А.-Х. Кадырова</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Курчалой%2C%20ул.%20А-Х.%20Кадырова">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГНКС «Ойсхар Метан»</div><div class="station-address">Ойсхара, трасса Р-217</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Ойсхара%2C%20трасса%20Р-217">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Беркат-Юрт»</div><div class="station-address">Чеченская Республика, с. Беркат-Юрт</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Беркат-Юрт%2C%20Чеченская%20Республика">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Петропавловская»</div><div class="station-address">Грозный, Петропавловское шоссе, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20Петропавловское%20шоссе">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Кезеной»</div><div class="station-address">Чеченская Республика, Кезеной-Ам</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Кезеной-Ам%2C%20Чеченская%20Республика">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГНКС «Метан Алтайская»</div><div class="station-address">Грозный, ул. Алтайская, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Алтайская">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Новотерское»</div><div class="station-address">Чеченская Республика, с. Новотерское</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Новотерское%2C%20Чеченская%20Республика">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГНКС «Метан Гудермес»</div><div class="station-address">Гудермес, ул. Белореченская, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Гудермес%2C%20ул.%20Белореченская">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Лидер»</div><div class="station-address">Гудермес</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Гудермес%2C%20Чеченская%20Республика">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «3 Героя»</div><div class="station-address">Грозный, ул. Назарбаева, 9Б</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Назарбаева%2C%209Б">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Перекрёсток»</div><div class="station-address">Грозный, пересечение ул. Назарбаева и ул. Первомайской</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20пересечение%20ул.%20Назарбаева%20и%20ул.%20Первомайской">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АЗС «Консервный»</div><div class="station-address">Грозный, пересечение ул. Назарбаева и ул. Жуковского</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20пересечение%20ул.%20Назарбаева%20и%20ул.%20Жуковского">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Трампарк»</div><div class="station-address">Грозный, ул. Гурина, 101</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Гурина%2C%20101">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Автовокзал»</div><div class="station-address">Грозный, ул. Сайханова, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Сайханова">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Б. Дудаева»</div><div class="station-address">Грозный, бульвар Дудаева, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20бульвар%20Дудаева">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АЗС «Минутка»</div><div class="station-address">Грозный, ул. Краснофлотская, 7А</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Краснофлотская%2C%207А">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Развилка»</div><div class="station-address">Грозный, пересечение ул. Узуева и Ханкальской, 2А</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20пересечение%20ул.%20Узуева%20и%20Ханкальской%2C%202А">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Лидер Старт»</div><div class="station-address">Грозный, ул. Индустриальная, 29</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Индустриальная%2C%2029">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГНКС «Башлам»</div><div class="station-address">Алхан-Юрт, трасса М-29, Башлам</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Алхан-Юрт%2C%20трасса%20М-29%2C%20Башлам">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Войково» Оскар</div><div class="station-address">Грозный, ул. Химиков, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Химиков">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">АГЗС «Комсомольская» Оскар</div><div class="station-address">Гудермес, ул. Терешковой, б/н</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Гудермес%2C%20ул.%20Терешковой">Построить маршрут</a></div>
+<div class="station"><div class="station-info"><div class="station-name">Мотель «Лидер»</div><div class="station-address">Алхан-Юрт, трасса М-29, Башлам</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Алхан-Юрт%2C%20трасса%20М-29%2C%20Башлам">Построить маршрут</a></div>
+</div>
+</div>
 <div class="card"><h2>🔥 Акции и предложения</h2><p class="small">Следи за новыми скидками и предложениями</p></div>
 <p class="small" style="text-align:center;margin-top:28px"><a href="admin.html" style="color:#a8b5c9">Вход для администратора</a></p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
