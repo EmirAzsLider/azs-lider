@@ -17,6 +17,7 @@ h1{font-size:28px;margin-top:35px}
 strong{color:#ffc928;font-size:19px}
 button,.route{display:inline-block;padding:11px 14px;border:0;border-radius:10px;background:#ffc928;color:#101b2c;font-weight:bold;font-size:14px;text-decoration:none;white-space:nowrap}
 h2{font-size:19px}
+input,textarea,select{font-family:Arial,sans-serif}textarea::placeholder,input::placeholder{color:#8c9bb1}
 .station-info{min-width:0}
 .station-name{font-weight:bold;font-size:15px}
 .station-address{color:#a8b5c9;font-size:13px;line-height:1.4;margin-top:5px}
@@ -72,6 +73,35 @@ h2{font-size:19px}
 <div class="station"><div class="station-info"><div class="station-name">Мотель «Лидер»</div><div class="station-address">Алхан-Юрт, трасса М-29, Башлам</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Алхан-Юрт%2C%20трасса%20М-29%2C%20Башлам">Построить маршрут</a></div>
 </div>
 </div>
+
+<div class="card" id="historyCard">
+<h2>📈 История цен</h2>
+<p class="small">Посмотри, как менялась стоимость топлива</p>
+<select id="historyFuel" style="width:100%;padding:13px;border-radius:10px;background:#081426;color:white;border:1px solid #40516a;font-size:15px">
+<option value="ai100">АИ-100</option><option value="ai98">АИ-98</option><option value="ai95">АИ-95</option><option value="ai92" selected>АИ-92</option><option value="ai80">АИ-80</option><option value="diesel_euro">ДТ Евро</option><option value="diesel">ДТ местный</option><option value="gas">ГАЗ</option><option value="methane">Метан</option>
+</select>
+<div id="historyList" class="small" style="margin-top:14px">Загрузка истории…</div>
+</div>
+<div class="card" id="reviewsCard">
+<h2>⭐ Отзывы клиентов</h2>
+<p class="small">Поделись впечатлением о нашей работе</p>
+<form id="reviewForm">
+<input id="reviewName" maxlength="80" required placeholder="Твоё имя" style="width:100%;padding:13px;border-radius:10px;border:1px solid #40516a;background:#081426;color:white;font-size:15px;margin:7px 0">
+<select id="reviewStation" required style="width:100%;padding:13px;border-radius:10px;background:#081426;color:white;border:1px solid #40516a;font-size:15px;margin:7px 0">
+<option value="">Выбери АЗС или объект</option>
+<option>АГЗС «Трампарк 2»</option><option>АГЗС «Ойсхара»</option><option>АГНКС «Метан»</option><option>АГЗС «Лидер-Курчалой»</option><option>АГНКС «Ойсхар Метан»</option><option>АГЗС «Беркат-Юрт»</option><option>АГЗС «Петропавловская»</option><option>АГЗС «Кезеной»</option><option>АГНКС «Метан Алтайская»</option><option>АГЗС «Новотерское»</option><option>АГНКС «Метан Гудермес»</option><option>АГЗС «Лидер»</option><option>АГЗС «3 Героя»</option><option>АГЗС «Перекрёсток»</option><option>АЗС «Консервный»</option><option>АГЗС «Трампарк»</option><option>АГЗС «Автовокзал»</option><option>АГЗС «Б. Дудаева»</option><option>АЗС «Минутка»</option><option>АГЗС «Развилка»</option><option>АГЗС «Лидер Старт»</option><option>АГНКС «Башлам»</option><option>АГЗС «Войково» Оскар</option><option>АГЗС «Комсомольская» Оскар</option><option>Мотель «Лидер»</option>
+</select>
+<select id="reviewRating" required style="width:100%;padding:13px;border-radius:10px;background:#081426;color:white;border:1px solid #40516a;font-size:15px;margin:7px 0">
+<option value="5">★★★★★ — 5</option><option value="4">★★★★☆ — 4</option><option value="3">★★★☆☆ — 3</option><option value="2">★★☆☆☆ — 2</option><option value="1">★☆☆☆☆ — 1</option>
+</select>
+<textarea id="reviewComment" required maxlength="1500" placeholder="Напиши отзыв…" rows="4" style="width:100%;padding:13px;border-radius:10px;border:1px solid #40516a;background:#081426;color:white;font-size:15px;margin:7px 0;resize:vertical"></textarea>
+<button type="submit" style="width:100%;margin-top:8px">Отправить отзыв</button>
+<p id="reviewStatus" class="small" aria-live="polite"></p>
+</form>
+<h2 style="margin-top:25px">Опубликованные отзывы</h2>
+<div id="approvedReviews" class="small">Загрузка отзывов…</div>
+</div>
+
 <div class="card"><h2>🔥 Акции и предложения</h2><p class="small">Следи за новыми скидками и предложениями</p></div>
 <p class="small" style="text-align:center;margin-top:28px"><a href="admin.html" style="color:#a8b5c9">Вход для администратора</a></p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -92,6 +122,53 @@ const priceClient=window.supabase.createClient('https://uaywtxvqzfqozwrzutaz.sup
  document.getElementById('priceMethane').textContent=format(data.methane)+' /м³';
  document.getElementById('priceUpdated').textContent=data.updated_at?'Обновлено: '+new Date(data.updated_at).toLocaleString('ru-RU'):'Актуальные цены';
 })();
+
+async function loadPriceHistory(){
+ const field=document.getElementById('historyFuel').value;
+ const names={ai100:'АИ-100',ai98:'АИ-98',ai95:'АИ-95',ai92:'АИ-92',ai80:'АИ-80',diesel_euro:'ДТ Евро',diesel:'ДТ местный',gas:'ГАЗ',methane:'Метан'};
+ const box=document.getElementById('historyList'); box.textContent='Загрузка истории…';
+ const {data,error}=await priceClient.from('fuel_price_history').select('changed_at,'+field).order('changed_at',{ascending:false}).limit(30);
+ if(error){box.textContent='Не удалось загрузить историю цен. Попробуй позже.';return;}
+ if(!data||!data.length){box.textContent='История пока пуста. Она начнёт заполняться после изменения цен.';return;}
+ box.replaceChildren();
+ data.forEach(row=>{
+  const line=document.createElement('div');line.className='price';
+  const date=document.createElement('span');date.textContent=new Date(row.changed_at).toLocaleString('ru-RU');
+  const value=document.createElement('strong');value.textContent=Number(row[field]).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+(field==='methane'?' ₽/м³':' ₽');
+  line.append(date,value);box.append(line);
+ });
+}
+document.getElementById('historyFuel').addEventListener('change',loadPriceHistory);
+loadPriceHistory();
+
+async function loadApprovedReviews(){
+ const box=document.getElementById('approvedReviews');box.textContent='Загрузка отзывов…';
+ const {data,error}=await priceClient.from('customer_reviews').select('customer_name,station_name,rating,comment,created_at').eq('approved',true).order('created_at',{ascending:false}).limit(30);
+ if(error){box.textContent='Не удалось загрузить отзывы.';return;}
+ if(!data||!data.length){box.textContent='Пока нет опубликованных отзывов. Будь первым!';return;}
+ box.replaceChildren();
+ data.forEach(review=>{
+  const card=document.createElement('div');card.style.cssText='padding:13px 0;border-bottom:1px solid #30415a';
+  const heading=document.createElement('div');heading.style.cssText='display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap';
+  const who=document.createElement('strong');who.style.fontSize='16px';who.textContent=review.customer_name+' • '+review.station_name;
+  const stars=document.createElement('span');stars.style.color='#ffc928';stars.textContent='★'.repeat(review.rating)+'☆'.repeat(5-review.rating);
+  const comment=document.createElement('p');comment.style.cssText='margin:9px 0 4px;white-space:pre-wrap';comment.textContent=review.comment;
+  const date=document.createElement('div');date.className='small';date.textContent=new Date(review.created_at).toLocaleDateString('ru-RU');
+  heading.append(who,stars);card.append(heading,comment,date);box.append(card);
+ });
+}
+loadApprovedReviews();
+
+document.getElementById('reviewForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const status=document.getElementById('reviewStatus');const submit=event.currentTarget.querySelector('button[type="submit"]');
+ submit.disabled=true;status.textContent='Отправляем…';
+ const payload={customer_name:document.getElementById('reviewName').value.trim(),station_name:document.getElementById('reviewStation').value,rating:Number(document.getElementById('reviewRating').value),comment:document.getElementById('reviewComment').value.trim(),approved:false};
+ const {error}=await priceClient.from('customer_reviews').insert(payload);
+ submit.disabled=false;
+ if(error){status.textContent='Не удалось отправить отзыв. Попробуй ещё раз.';return;}
+ event.currentTarget.reset();status.textContent='Спасибо! Отзыв отправлен на проверку и появится после одобрения.';
+});
 </script>
 </body>
 </html>
