@@ -14,6 +14,15 @@ input{width:100%;margin-top:7px;padding:14px;border:1px solid #40516b;border-rad
 button{width:100%;padding:15px;border:0;border-radius:11px;background:#ffc928;color:#101b2c;font-weight:bold;font-size:16px;margin-top:18px}
 button.secondary{background:#263a57;color:#fff}
 #editor{display:none}.message{min-height:22px;margin-top:14px;font-size:14px;color:#ffc928}.back{display:block;margin-top:20px;text-align:center;color:#a8b5c9}
+#reviewsSection{margin-top:30px;padding-top:22px;border-top:1px solid #40516b}
+.review{background:#0b1930;border:1px solid #40516b;border-radius:12px;padding:15px;margin-top:12px}
+.review p{margin:8px 0;color:#dbe5f4;white-space:pre-wrap;overflow-wrap:anywhere}
+.review-meta{font-size:13px;color:#a8b5c9}
+.review-actions{display:flex;gap:10px}
+.review-actions button{margin-top:12px;flex:1}
+.review-actions .reject{background:#8b3542;color:#fff}
+#reviewsList:empty:after{content:'Новых отзывов пока нет.';display:block;color:#a8b5c9;font-size:14px;margin-top:12px}
+@media(max-width:420px){body{padding:12px}.card{padding:17px}.review-actions{flex-direction:column;gap:0}}
 </style>
 </head>
 <body>
@@ -36,7 +45,14 @@ button.secondary{background:#263a57;color:#fff}
 <label for="diesel">ДТ местный (₽/л)</label><input id="diesel" type="number" min="0" step="0.01">
 <label for="gas">ГАЗ (₽/л)</label><input id="gas" type="number" min="0" step="0.01">
 <label for="methane">Метан (₽/м³)</label><input id="methane" type="number" min="0" step="0.01">
-<button id="saveBtn">Сохранить цены</button><button id="logoutBtn" class="secondary">Выйти</button>
+<button id="saveBtn">Сохранить цены</button>
+<div id="reviewsSection" style="display:none">
+<h1>Модерация отзывов</h1>
+<p>Здесь отображаются отзывы, ожидающие проверки. Одобренные отзывы появятся на главной странице.</p>
+<button id="refreshReviewsBtn" class="secondary" type="button">Обновить отзывы</button>
+<div id="reviewsList" aria-live="polite"></div>
+</div>
+<button id="logoutBtn" class="secondary">Выйти</button>
 </section>
 <div id="message" class="message" role="status"></div>
 <a class="back" href="./">← Вернуться на сайт</a>
@@ -47,6 +63,8 @@ const SUPABASE_URL='https://uaywtxvqzfqozwrzutaz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_k76gkPShf1-Gb0l77qJsfA_D2TcuLcV';
 const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let currentRowId=null;
+const ADMIN_USER_ID='1844fe2d-aaa6-4a8a-bfeb-64b513b2b18f';
+let reviewActionInProgress=false;
 const loginSection=document.getElementById('login'),editorSection=document.getElementById('editor'),message=document.getElementById('message');
 function say(text){message.textContent=text;}
 async function loadPrices(){
@@ -61,8 +79,68 @@ async function loadPrices(){
 async function showSession(){
  const {data:{session}}=await client.auth.getSession();const loggedIn=!!session;
  loginSection.style.display=loggedIn?'none':'block';editorSection.style.display=loggedIn?'block':'none';
- if(loggedIn)await loadPrices();
+ if(loggedIn){
+  await loadPrices();
+  const isAdmin=session.user?.id===ADMIN_USER_ID;
+  document.getElementById('reviewsSection').style.display=isAdmin?'block':'none';
+  if(isAdmin)await loadReviews();
+ }else{
+  document.getElementById('reviewsSection').style.display='none';
+  document.getElementById('reviewsList').replaceChildren();
+ }
 }
+
+function safeText(value){return value==null?'':String(value);}
+function formatReviewDate(value){
+ if(!value)return 'Дата не указана';
+ const date=new Date(value);
+ return Number.isNaN(date.getTime())?'':date.toLocaleString('ru-RU');
+}
+async function loadReviews(){
+ const list=document.getElementById('reviewsList');
+ list.textContent='Загружаю отзывы…';
+ const {data,error}=await client.from('customer_reviews')
+  .select('id,customer_name,station_name,rating,comment,created_at')
+  .eq('approved',false).order('created_at',{ascending:false});
+ if(error){list.textContent='Не удалось загрузить отзывы: '+error.message;return;}
+ list.replaceChildren();
+ if(!data||data.length===0)return;
+ for(const review of data){
+  const card=document.createElement('article');card.className='review';
+  const heading=document.createElement('strong');
+  heading.textContent=safeText(review.customer_name)||'Без имени';
+  const meta=document.createElement('div');meta.className='review-meta';
+  meta.textContent=safeText(review.station_name)+' · '+('★'.repeat(Math.max(0,Math.min(5,Number(review.rating)||0))))+' · '+formatReviewDate(review.created_at);
+  const comment=document.createElement('p');comment.textContent=safeText(review.comment)||'Комментарий отсутствует';
+  const actions=document.createElement('div');actions.className='review-actions';
+  const approve=document.createElement('button');approve.type='button';approve.textContent='Одобрить';
+  const reject=document.createElement('button');reject.type='button';reject.textContent='Отклонить';reject.className='reject';
+  approve.addEventListener('click',()=>moderateReview(review.id,'approve',approve,reject));
+  reject.addEventListener('click',()=>moderateReview(review.id,'reject',approve,reject));
+  actions.append(approve,reject);card.append(heading,meta,comment,actions);list.append(card);
+ }
+}
+async function moderateReview(id,action,approveButton,rejectButton){
+ if(reviewActionInProgress)return;
+ reviewActionInProgress=true;approveButton.disabled=true;rejectButton.disabled=true;
+ say(action==='approve'?'Публикую отзыв…':'Удаляю отзыв…');
+ let result;
+ if(action==='approve'){
+  result=await client.from('customer_reviews').update({approved:true}).eq('id',id).eq('approved',false);
+ }else{
+  result=await client.from('customer_reviews').delete().eq('id',id).eq('approved',false);
+ }
+ if(result.error){
+  say('Не удалось обработать отзыв: '+result.error.message);
+  approveButton.disabled=false;rejectButton.disabled=false;
+ }else{
+  say(action==='approve'?'Отзыв опубликован.':'Отзыв отклонён и удалён.');
+  await loadReviews();
+ }
+ reviewActionInProgress=false;
+}
+document.getElementById('refreshReviewsBtn').addEventListener('click',loadReviews);
+
 document.getElementById('loginBtn').addEventListener('click',async()=>{
  say('Выполняю вход…');const email=document.getElementById('email').value.trim(),password=document.getElementById('password').value;
  const {error}=await client.auth.signInWithPassword({email,password});if(error){say('Ошибка входа: '+error.message);return;}await showSession();
