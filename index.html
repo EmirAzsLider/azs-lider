@@ -22,7 +22,11 @@ input,textarea,select{font-family:Arial,sans-serif}textarea::placeholder,input::
 .station-name{font-weight:bold;font-size:15px}
 .station-address{color:#a8b5c9;font-size:13px;line-height:1.4;margin-top:5px}
 .station .route{flex-shrink:0}
-@media(max-width:420px){body{padding:15px}.station{align-items:flex-start;flex-direction:column}.station .route{width:100%;text-align:center}}
+.favorite-toggle{padding:10px 13px;background:#30415a;color:#ffc928;border:1px solid #52627a;cursor:pointer}
+.favorite-toggle[aria-pressed="true"]{background:#ffc928;color:#101b2c}
+.station-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+#favoritesList .station{align-items:center}
+@media(max-width:420px){body{padding:15px}.station{align-items:flex-start;flex-direction:column}.station-actions{width:100%}.station-actions .route{flex:1;text-align:center}.favorite-toggle{flex-shrink:0}}
 </style>
 </head>
 <body>
@@ -42,8 +46,17 @@ input,textarea,select{font-family:Arial,sans-serif}textarea::placeholder,input::
 <div class="price"><span>Метан</span><strong id="priceMethane">Загрузка…</strong></div>
 <p class="small" id="priceUpdated">Актуальные цены</p>
 </div>
-<div class="card">
-<h2>📍 Наши АЗС и объекты</h2>
+<div class="card" id="fuelCalculator">
+<h2>🧮 Калькулятор топлива</h2><p class="small">Рассчитай стоимость заправки или количество топлива</p>
+<label class="small" for="calcFuel">Вид топлива</label>
+<select id="calcFuel" style="width:100%;padding:13px;border-radius:10px;background:#081426;color:white;border:1px solid #40516a;font-size:15px;margin:7px 0 12px">
+<option value="ai100">АИ-100</option><option value="ai98">АИ-98</option><option value="ai95">АИ-95</option><option value="ai92" selected>АИ-92</option><option value="ai80">АИ-80</option><option value="diesel_euro">ДТ Евро</option><option value="diesel">ДТ местный</option><option value="gas">ГАЗ</option><option value="methane">Метан</option></select>
+<div style="display:flex;gap:8px;margin:5px 0 12px"><button type="button" id="calcByLiters" style="flex:1">Ввести литры / м³</button><button type="button" id="calcByMoney" style="flex:1;background:#30415a;color:white">Ввести сумму</button></div>
+<label class="small" id="calcInputLabel" for="calcInput">Количество литров / м³</label>
+<input id="calcInput" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="Например, 30" style="width:100%;padding:13px;border-radius:10px;border:1px solid #40516a;background:#081426;color:white;font-size:16px;margin:7px 0">
+<div class="small" id="calcUnitPrice">Цена: загрузка…</div><div id="calcResult" aria-live="polite" style="margin-top:14px;padding:14px;background:#081426;border-radius:12px;font-size:17px">Введи значение для расчёта</div></div>
+<div class="card" id="favoritesCard"><h2>⭐ Избранные АЗС</h2><p class="small">Нажми на звёздочку рядом с объектом, чтобы сохранить его здесь. Избранное хранится на этом устройстве.</p><div id="favoritesList" class="small">Пока ничего не добавлено.</div></div>
+<div class="card"><h2>📍 Наши АЗС и объекты</h2>
 <p class="small">Выбери объект и построй маршрут до него</p>
 <div id="stations">
 <div class="station"><div class="station-info"><div class="station-name">АГЗС «Трампарк 2»</div><div class="station-address">Грозный, ул. Краснофлотская, б/н</div><div class="station-hours" style="color:#78dba0;font-size:13px;margin-top:6px">🕒 Круглосуточно • 24/7</div></div><a class="route" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=Грозный%2C%20ул.%20Краснофлотская">Построить маршрут</a></div>
@@ -107,9 +120,31 @@ input,textarea,select{font-family:Arial,sans-serif}textarea::placeholder,input::
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const priceClient=window.supabase.createClient('https://uaywtxvqzfqozwrzutaz.supabase.co','sb_publishable_k76gkPShf1-Gb0l77qJsfA_D2TcuLcV');
+let currentFuelPrices=null;let calcMode='liters';
+function updateCalculator(){
+ const fuel=document.getElementById('calcFuel').value,unit=fuel==='methane'?'м³':'л',price=currentFuelPrices?.[fuel];
+ document.getElementById('calcUnitPrice').textContent=Number.isFinite(Number(price))?'Цена: '+Number(price).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽ / '+unit:'Цена пока не загружена';
+ const raw=Number(document.getElementById('calcInput').value),result=document.getElementById('calcResult');
+ if(!document.getElementById('calcInput').value||!Number.isFinite(raw)||raw<=0||!Number.isFinite(Number(price))){result.textContent='Введи корректное значение для расчёта';return;}
+ if(calcMode==='liters'){const total=raw*Number(price);result.textContent=raw.toLocaleString('ru-RU',{maximumFractionDigits:2})+' '+unit+' × '+Number(price).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽ = '+total.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';}
+ else{const quantity=raw/Number(price);result.textContent=raw.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽ = '+quantity.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' '+unit;}
+}
+function setCalcMode(mode){
+ calcMode=mode;const liters=mode==='liters';
+ document.getElementById('calcInputLabel').textContent=liters?'Количество литров / м³':'Сумма в рублях';
+ document.getElementById('calcInput').placeholder=liters?'Например, 30':'Например, 2000';
+ document.getElementById('calcByLiters').style.background=liters?'#ffc928':'#30415a';document.getElementById('calcByLiters').style.color=liters?'#101b2c':'white';
+ document.getElementById('calcByMoney').style.background=liters?'#30415a':'#ffc928';document.getElementById('calcByMoney').style.color=liters?'white':'#101b2c';updateCalculator();
+}
+document.getElementById('calcFuel').addEventListener('change',updateCalculator);
+document.getElementById('calcInput').addEventListener('input',updateCalculator);
+document.getElementById('calcByLiters').addEventListener('click',()=>setCalcMode('liters'));
+document.getElementById('calcByMoney').addEventListener('click',()=>setCalcMode('money'));
+
 (async function loadFuelPrices(){
  const {data,error}=await priceClient.from('fuel_prices').select('ai92,ai95,diesel,ai98,diesel_euro,gas,ai100,ai80,methane,updated_at').order('id',{ascending:true}).limit(1).maybeSingle();
  if(error||!data){document.getElementById('priceUpdated').textContent='Не удалось загрузить цены';return;}
+ currentFuelPrices=data;updateCalculator();
  const format=value=>Number(value).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';
  document.getElementById('price92').textContent=format(data.ai92);
  document.getElementById('price95').textContent=format(data.ai95);
@@ -158,6 +193,30 @@ async function loadApprovedReviews(){
  });
 }
 loadApprovedReviews();
+
+// Избранные АЗС сохраняются локально на устройстве пользователя.
+const FAVORITES_KEY='azsLiderFavoriteStations';
+function readFavorites(){try{const value=JSON.parse(localStorage.getItem(FAVORITES_KEY)||'[]');return Array.isArray(value)?value:[];}catch(e){return [];}}
+function writeFavorites(items){try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(items));return true;}catch(e){return false;}}
+function renderFavorites(){
+ const list=document.getElementById('favoritesList'),saved=readFavorites();list.replaceChildren();
+ if(!saved.length){list.textContent='Пока ничего не добавлено. Нажми ☆ рядом с нужной АЗС.';return;}
+ const stations=[...document.querySelectorAll('#stations .station')];
+ saved.forEach(name=>{const original=stations.find(item=>item.querySelector('.station-name')?.textContent.trim()===name);if(!original)return;const copy=original.cloneNode(true);const toggle=copy.querySelector('.favorite-toggle');if(toggle)toggle.remove();list.append(copy);});
+ if(!list.children.length)list.textContent='Пока ничего не добавлено.';
+}
+function setupStationFavorites(){
+ document.querySelectorAll('#stations .station').forEach(station=>{
+  const name=station.querySelector('.station-name')?.textContent.trim(),route=station.querySelector('.route');if(!name||!route)return;
+  const actions=document.createElement('div');actions.className='station-actions';
+  const star=document.createElement('button');star.type='button';star.className='favorite-toggle';
+  const update=()=>{const active=readFavorites().includes(name);star.textContent=active?'★ В избранном':'☆ В избранное';star.setAttribute('aria-pressed',String(active));star.setAttribute('aria-label',(active?'Убрать из избранного: ':'Добавить в избранное: ')+name);};
+  star.addEventListener('click',()=>{const items=readFavorites(),index=items.indexOf(name);if(index>=0)items.splice(index,1);else items.push(name);if(!writeFavorites(items)){alert('Не удалось сохранить избранное на этом устройстве.');return;}update();renderFavorites();});
+  route.parentNode.insertBefore(actions,route);actions.append(route,star);update();
+ });
+ renderFavorites();
+}
+setupStationFavorites();
 
 document.getElementById('reviewForm').addEventListener('submit',async event=>{
  event.preventDefault();
