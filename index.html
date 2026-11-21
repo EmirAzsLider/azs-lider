@@ -21,13 +21,12 @@ input,textarea,select{font-family:Arial,sans-serif}textarea::placeholder,input::
 .station-info{min-width:0}
 .station-name{font-weight:bold;font-size:15px}
 .station-address{color:#a8b5c9;font-size:13px;line-height:1.4;margin-top:5px}
-.station .route{flex-shrink:0;padding:6px 9px;background:#1b2e49;color:#dce6f4;border:1px solid #40536e;border-radius:7px;font-size:11px;font-weight:600;letter-spacing:.1px;transition:background .18s,border-color .18s}
-.station .route:hover{background:#243b5b;border-color:#607895}
-.favorite-toggle{width:29px;height:29px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:transparent;color:#aab9cc;border:1px solid #40536e;border-radius:7px;font-size:17px;line-height:1;cursor:pointer;transition:all .18s}
+.station-actions{display:flex;flex-direction:column;align-items:stretch;gap:5px;flex-shrink:0}
+.station-actions .route{display:block;padding:8px 10px;border:0;border-radius:9px;background:#ffc928;color:#101b2c;font-weight:bold;font-size:12px;text-align:center;white-space:nowrap}
+.favorite-toggle{display:block;width:100%;padding:5px 7px;border:1px solid #40536e;border-radius:7px;background:#30415a;color:#c5d0df;font-size:11px;font-weight:600;line-height:1.2;cursor:pointer;white-space:nowrap}
 .favorite-toggle[aria-pressed="true"]{background:rgba(255,201,40,.12);color:#ffc928;border-color:rgba(255,201,40,.55)}
-.station-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 #favoritesList .station{align-items:center}
-@media(max-width:420px){body{padding:15px}.station{align-items:flex-start;flex-direction:column}.station-actions{width:auto}.station-actions .route{flex:none;text-align:center}.favorite-toggle{flex-shrink:0}}
+@media(max-width:420px){body{padding:15px}.station{align-items:flex-start;flex-direction:column}.station-actions{width:max-content;max-width:100%}.station-actions .route{flex:none;text-align:center}}
 </style>
 </head>
 <body>
