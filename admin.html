@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — АЗС Лидер</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:22px;background:#081426;color:#fff;font-family:Arial,sans-serif}
+header{font-size:24px;font-weight:bold;color:#ffc928;margin:8px 0 26px}
+.card{max-width:520px;margin:0 auto;background:#14243b;border-radius:18px;padding:22px}
+h1{font-size:23px;margin:0 0 8px}p{color:#a8b5c9;font-size:14px;line-height:1.5}
+label{display:block;margin-top:16px;font-size:14px;color:#dbe5f4}
+input{width:100%;margin-top:7px;padding:14px;border:1px solid #40516b;border-radius:10px;background:#0b1930;color:#fff;font-size:17px}
+button{width:100%;padding:15px;border:0;border-radius:11px;background:#ffc928;color:#101b2c;font-weight:bold;font-size:16px;margin-top:18px}
+button.secondary{background:#263a57;color:#fff}
+#editor{display:none}.message{min-height:22px;margin-top:14px;font-size:14px;color:#ffc928}.back{display:block;margin-top:20px;text-align:center;color:#a8b5c9}
+</style>
+</head>
+<body>
+<header>⚡ ЛИДЕР</header>
+<main class="card">
+<section id="login">
+<h1>Вход администратора</h1>
+<p>Войди под созданным в Supabase пользователем, чтобы изменить цены на топливо.</p>
+<label for="email">Электронная почта</label>
+<input id="email" type="email" autocomplete="username" placeholder="name@example.com">
+<label for="password">Пароль</label>
+<input id="password" type="password" autocomplete="current-password" placeholder="Пароль">
+<button id="loginBtn">Войти</button>
+</section>
+<section id="editor">
+<h1>Цены на топливо</h1>
+<p>Изменения сразу появятся на главной странице приложения.</p>
+<label for="ai92">АИ-92 (₽/л)</label><input id="ai92" type="number" min="0" step="0.01">
+<label for="ai95">АИ-95 (₽/л)</label><input id="ai95" type="number" min="0" step="0.01">
+<label for="diesel">Дизель (₽/л)</label><input id="diesel" type="number" min="0" step="0.01">
+<button id="saveBtn">Сохранить цены</button>
+<button id="logoutBtn" class="secondary">Выйти</button>
+</section>
+<div id="message" class="message" role="status"></div>
+<a class="back" href="./">← Вернуться на сайт</a>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://uaywtxvqzfqozwrzutaz.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_k76gkPShf1-Gb0l77qJsfA_D2TcuLcV';
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let currentRowId = null;
+const loginSection = document.getElementById('login');
+const editorSection = document.getElementById('editor');
+const message = document.getElementById('message');
+function say(text){message.textContent=text;}
+async function loadPrices(){
+  say('Загружаю текущие цены…');
+  const {data,error} = await client.from('fuel_prices').select('id,ai92,ai95,diesel').order('id',{ascending:true}).limit(1).maybeSingle();
+  if(error){say('Не удалось загрузить цены: '+error.message);return;}
+  if(!data){say('В таблице пока нет строки с ценами.');return;}
+  currentRowId=data.id;
+  document.getElementById('ai92').value=data.ai92;
+  document.getElementById('ai95').value=data.ai95;
+  document.getElementById('diesel').value=data.diesel;
+  say('Текущие цены загружены.');
+}
+async function showSession(){
+  const {data:{session}}=await client.auth.getSession();
+  const loggedIn=!!session;
+  loginSection.style.display=loggedIn?'none':'block';
+  editorSection.style.display=loggedIn?'block':'none';
+  if(loggedIn) await loadPrices();
+}
+document.getElementById('loginBtn').addEventListener('click',async()=>{
+  say('Выполняю вход…');
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const {error}=await client.auth.signInWithPassword({email,password});
+  if(error){say('Ошибка входа: '+error.message);return;}
+  await showSession();
+});
+document.getElementById('saveBtn').addEventListener('click',async()=>{
+  const values=['ai92','ai95','diesel'].map(id=>Number(document.getElementById(id).value));
+  if(values.some(v=>!Number.isFinite(v)||v<0)){say('Проверь цены: нужны числа не меньше нуля.');return;}
+  if(currentRowId===null){say('Не найдена строка с ценами.');return;}
+  say('Сохраняю…');
+  const {error}=await client.from('fuel_prices').update({ai92:values[0],ai95:values[1],diesel:values[2],updated_at:new Date().toISOString()}).eq('id',currentRowId);
+  if(error){say('Не удалось сохранить: '+error.message);return;}
+  say('Цены успешно сохранены!');
+});
+document.getElementById('logoutBtn').addEventListener('click',async()=>{
+  await client.auth.signOut();
+  loginSection.style.display='block';editorSection.style.display='none';say('Ты вышел из аккаунта.');
+});
+showSession();
+</script>
+</body>
+</html>
