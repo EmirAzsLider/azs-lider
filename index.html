@@ -31,10 +31,10 @@ h2{font-size:19px}
 
 <div class="card">
 <h2>⛽ Цены на топливо</h2>
-<div class="price"><span>АИ-92</span><strong>— ₽</strong></div>
-<div class="price"><span>АИ-95</span><strong>— ₽</strong></div>
-<div class="price"><span>Дизель</span><strong>— ₽</strong></div>
-<p class="small">Цены уточняются на АЗС</p>
+<div class="price"><span>АИ-92</span><strong id="price92">Загрузка…</strong></div>
+<div class="price"><span>АИ-95</span><strong id="price95">Загрузка…</strong></div>
+<div class="price"><span>Дизель</span><strong id="priceDiesel">Загрузка…</strong></div>
+<p class="small" id="priceUpdated">Актуальные цены</p>
 </div>
 
 <div class="card">
@@ -53,5 +53,27 @@ h2{font-size:19px}
 <h2>🔥 Акции и предложения</h2>
 <p class="small">Следи за новыми скидками и предложениями</p>
 </div>
+<p class="small" style="text-align:center;margin-top:28px"><a href="admin.html" style="color:#a8b5c9">Вход для администратора</a></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const priceClient = window.supabase.createClient(
+  'https://uaywtxvqzfqozwrzutaz.supabase.co',
+  'sb_publishable_k76gkPShf1-Gb0l77qJsfA_D2TcuLcV'
+);
+(async function loadFuelPrices(){
+  const {data,error}=await priceClient.from('fuel_prices').select('ai92,ai95,diesel,updated_at').order('id',{ascending:true}).limit(1).maybeSingle();
+  if(error || !data){
+    document.getElementById('priceUpdated').textContent='Не удалось загрузить цены';
+    return;
+  }
+  const format=value=>Number(value).toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₽';
+  document.getElementById('price92').textContent=format(data.ai92);
+  document.getElementById('price95').textContent=format(data.ai95);
+  document.getElementById('priceDiesel').textContent=format(data.diesel);
+  document.getElementById('priceUpdated').textContent=data.updated_at
+    ? 'Обновлено: '+new Date(data.updated_at).toLocaleString('ru-RU')
+    : 'Актуальные цены';
+})();
+</script>
 </body>
 </html>
