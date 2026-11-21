@@ -27,14 +27,14 @@ button.secondary{background:#263a57;color:#fff}
 </section>
 <section id="editor">
 <h1>Цены на топливо</h1><p>Изменения сразу появятся на главной странице приложения.</p>
-<label for="ai92">АИ-92 (₽/л)</label><input id="ai92" type="number" min="0" step="0.01">
-<label for="ai95">АИ-95 (₽/л)</label><input id="ai95" type="number" min="0" step="0.01">
-<label for="diesel">ДТ местный (₽/л)</label><input id="diesel" type="number" min="0" step="0.01">
-<label for="ai98">АИ-98 (₽/л)</label><input id="ai98" type="number" min="0" step="0.01">
-<label for="diesel_euro">ДТ Евро (₽/л)</label><input id="diesel_euro" type="number" min="0" step="0.01">
-<label for="gas">Газ (₽/л)</label><input id="gas" type="number" min="0" step="0.01">
 <label for="ai100">АИ-100 (₽/л)</label><input id="ai100" type="number" min="0" step="0.01">
+<label for="ai98">АИ-98 (₽/л)</label><input id="ai98" type="number" min="0" step="0.01">
+<label for="ai95">АИ-95 (₽/л)</label><input id="ai95" type="number" min="0" step="0.01">
+<label for="ai92">АИ-92 (₽/л)</label><input id="ai92" type="number" min="0" step="0.01">
 <label for="ai80">АИ-80 (₽/л)</label><input id="ai80" type="number" min="0" step="0.01">
+<label for="diesel_euro">ДТ Евро (₽/л)</label><input id="diesel_euro" type="number" min="0" step="0.01">
+<label for="diesel">ДТ местный (₽/л)</label><input id="diesel" type="number" min="0" step="0.01">
+<label for="gas">ГАЗ (₽/л)</label><input id="gas" type="number" min="0" step="0.01">
 <label for="methane">Метан (₽/м³)</label><input id="methane" type="number" min="0" step="0.01">
 <button id="saveBtn">Сохранить цены</button><button id="logoutBtn" class="secondary">Выйти</button>
 </section>
@@ -68,7 +68,7 @@ document.getElementById('loginBtn').addEventListener('click',async()=>{
  const {error}=await client.auth.signInWithPassword({email,password});if(error){say('Ошибка входа: '+error.message);return;}await showSession();
 });
 document.getElementById('saveBtn').addEventListener('click',async()=>{
- const fields=['ai92','ai95','diesel','ai98','diesel_euro','gas'];
+ const fields=['ai100','ai98','ai95','ai92','ai80','diesel_euro','diesel','gas','methane'];
  const values=fields.map(id=>Number(document.getElementById(id).value));
  if(values.some(v=>!Number.isFinite(v)||v<0)){say('Проверь цены: нужны числа не меньше нуля.');return;}
  if(currentRowId===null){say('Не найдена строка с ценами.');return;}
